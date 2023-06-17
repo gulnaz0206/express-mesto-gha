@@ -9,9 +9,13 @@ const parser = require('parser');
 const mongoose = require('mongoose');
 const router = require('./routes/index');
 
-const { PORT = 4500, URL } = process.env;
+const { PORT = 3000 } = process.env;
 const app = express();
-mongoose.connect(URL);
+mongoose.connect('mongodb://localhost:27017/mestodb', {
+useNewUrlParser: true,
+useCreateIndex: true,
+useFindAndModify: false,
+});
 
 app.use(parser());
 app.use(express.json());
