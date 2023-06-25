@@ -30,7 +30,7 @@ const findAllUsers = (req, res) => {
 };
 
 const CreateUser = (req, res) => {
-    const { name, about, avatar } = req.body;
+    const { name, about, avatar } = req.body.data;
     User.create({ name, about, avatar })
     .then((user) => res.send({ data: user }))
     .catch((err) => {

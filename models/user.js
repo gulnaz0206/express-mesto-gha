@@ -9,7 +9,7 @@ const bcrypt = require('bcrypt');
 const userSchema = new mongoose.Schema({
     email: {
         type: String,
-        required: true,
+        required: false,
         unique: true,
         validate: {
             validator: (email) => validator.isEmail(email),
@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: false,
         select: false,
     },
     name: {
@@ -38,10 +38,12 @@ const userSchema = new mongoose.Schema({
         message: 'Некорректное описание',
     },
     avatar: {
-        type: String,
+        data: Buffer,
+        type: 'String',
+        required: true,
         validate: {
-            validator: (value) => validator.isUrl(value),
-            message: 'Некорректная ссылка',
+          validator: (value) => (validator.isURL(value)),
+          message: (value) => `${(value)} некорректный, попробуйте использовать другой url`,
         },
         default: '',
     },
@@ -65,4 +67,5 @@ userSchema.statics.findUserByCredentials = async function findUserByCredentials(
         throw error;
     }
 };
-module.exports = mongoose.model('user', userSchema);
+
+module.exports = mongoose.model('users', userSchema);
