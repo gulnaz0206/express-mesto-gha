@@ -4,37 +4,23 @@
 
 const mongoose = require('mongoose');
 const validator = require('validator');
-const bcrypt = require('bcrypt');
 
-const userSchema = new mongoose.Schema({
-    email: {
-        type: String,
-        required: false,
-        unique: true,
-        validate: {
-            validator: (email) => validator.isEmail(email),
-            message: ({ value }) => `${value} некорректный, попробуйте использовать другой email`,
-        },
-    },
-    password: {
-        type: String,
-        required: false,
-        select: false,
-    },
+const userSchema = new mongoose.Schema(
+{
     name: {
         type: String,
-        minlength: 2,
-        maxlength: 30,
+        required: [true, 'Поле "name" должно быть заполнено'],
+        minlength: [2, 'Минимальная длина поля "name" - 2'],
+        maxlength: [30, 'Максимальная длина поля "name" - 30'],
         default: 'Жак-Ив Кусто',
-        validator: (value) => validator.isAlpha(value),
         message: 'Некорректное имя',
     },
     about: {
         type: String,
-        minlength: 2,
-        maxlength: 30,
+        required: [true, 'Поле "about" должно быть заполнено'],
+        minlength: [2, 'Минимальная длина поля "about" - 2'],
+        maxlength: [30, 'Максимальная длина поля "about" - 30'],
         default: 'Исследователь',
-        validator: (value) => validator.isAlpha(value),
         message: 'Некорректное описание',
     },
     avatar: {
@@ -47,25 +33,7 @@ const userSchema = new mongoose.Schema({
         },
         default: '',
     },
-}, { toJSON: { useProjection: true }, toObject: { useProjection: true } });
-
-userSchema.statics.findUserByCredentials = async function findUserByCredentials(email, password) {
-    try {
-        const user = await this.findOne({ email }).select('+password');
-        if (!user) {
-            const error = await this.Unauthorized('Неправильно введена почта или пароль');
-            throw error;
-        }
-        const matched = await bcrypt.compare(password, user.password);
-        if (!matched) {
-            const error = new Error('Неправильно введена почта или пароль');
-            throw error;
-        }
-        return user;
-    } catch (error) {
-        console.error(error);
-        throw error;
-    }
-};
-
-module.exports = mongoose.model('users', userSchema);
+},
+  { versionKey: false },
+);
+module.exports = mongoose.model('user', userSchema);

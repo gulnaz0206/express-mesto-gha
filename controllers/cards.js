@@ -1,68 +1,85 @@
-/* eslint-disable linebreak-style */
-/* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable indent */
-const mongoose = require('mongoose');
-const validator = require('validator');
-const bcrypt = require('bcrypt');
+/* eslint-disable no-underscore-dangle */
+const Card = require('../models/card');
+const {
+  OK, CREATED, BAD_REQUEST, NOT_FOUND, SERVER_ERROR,
+} = require('../resposneStatus');
 
-const userSchema = new mongoose.Schema({
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-        validate: {
-            validator: (email) => validator.isEmail(email),
-            message: ({ value }) => `${value} некорректный, попробуйте использовать другой email`,
-        },
-    },
-    password: {
-        type: String,
-        required: true,
-        select: false,
-    },
-    name: {
-        type: String,
-        minlength: 2,
-        maxlength: 30,
-        default: 'Жак-Ив Кусто',
-        validator: (value) => validator.isAlpha(value),
-        message: 'Некорректное имя',
-    },
-    about: {
-        type: String,
-        minlength: 2,
-        maxlength: 30,
-        default: 'Исследователь',
-        validator: (value) => validator.isAlpha(value),
-        message: 'Некорректное описание',
-    },
-    avatar: {
-        type: String,
-        validate: {
-            validator: (value) => validator.isUrl(value),
-            message: 'Некорректная ссылка',
-        },
-        default: '',
-    },
-}, { toJSON: { useProjection: true }, toObject: { useProjection: true } });
-
-userSchema.statics.findUserByCredentials = async function findUserByCredentials(email, password) {
-    try {
-        const user = await this.findOne({ email }).select('+password');
-        if (!user) {
-            const error = await this.Unauthorized('Неправильно введена почта или пароль');
-            throw error;
-        }
-        const matched = await bcrypt.compare(password, user.password);
-        if (!matched) {
-            const error = new Error('Неправильно введена почта или пароль');
-            throw error;
-        }
-        return user;
-    }
-    catch (error) {
-        console.error(error);
-        throw error;
-    }
+module.exports.getCards = (req, res) => {
+  Card.find({})
+    .then((cards) => res.status(OK).send({ data: cards }))
+    .catch((err) => {
+      res.status(SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` });
+    });
 };
-module.exports = mongoose.model('user', userSchema);
+module.exports.createCard = (req, res) => {
+  const { name, link } = req.body;
+  const owner = req.user._id;
+  Card.create({ name, link, owner })
+    .then((card) => res.status(CREATED).send({ data: card }))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(BAD_REQUEST).send({ message: `Ошибка сервера: ${err.message}` });
+      } else {
+        res.status(SERVER_ERROR).send({ message: `Ошибка сервера: ${err.message}` });
+      }
+    });
+};
+module.exports.deleteCard = (req, res) => {
+  Card.findByIdAndRemove(req.params.cardId)
+    .then((card) => {
+      if (!card) {
+        res.status(NOT_FOUND).send({ message: 'Такой карточки не существует' });
+        return;
+      }
+      res.status(OK).send({ data: card });
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).send({ message: 'Невалидный id ' });
+      } else {
+        res.status(SERVER_ERROR).send({ message: `Произошла ошиибка ${err.name} с текстом ${err.message}` });
+      }
+    });
+};
+module.exports.likeCard = (req, res) => {
+  Card.findByIdAndUpdate(
+    req.params.cardId,
+    { $addToSet: { likes: req.user._id } },
+    { new: true },
+  )
+    .then((card) => {
+      if (!card) {
+        res.status(NOT_FOUND).send({ message: 'Такой карточки не существует' });
+        return;
+      }
+      res.status(OK).send({ data: card });
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).send({ message: 'Невалидный id' });
+      } else {
+        res.status(SERVER_ERROR).send({ message: `Произошла ошиибка ${err.name} с текстом ${err.message}` });
+      }
+    });
+};
+module.exports.dislikeCard = (req, res) => {
+  Card.findByIdAndUpdate(
+    req.params.cardId,
+    { $pull: { likes: req.user._id } },
+    { new: true },
+  )
+    .then((card) => {
+      if (!card) {
+        res.status(NOT_FOUND).send({ message: 'Такой карточки не существует' });
+        return;
+      }
+      res.status(OK).send({ data: card });
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).send({ message: 'Невалидный id' });
+      } else {
+        res.status(SERVER_ERROR).send({ message: `Произошла ошиибка ${err.name} с текстом ${err.message}` });
+      }
+    });
+};

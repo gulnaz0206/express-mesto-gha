@@ -1,66 +1,87 @@
-/* eslint-disable no-underscore-dangle */ /* eslint-disable linebreak-style */
-/* eslint-disable import/order */
-/* eslint-disable indent */
+/* eslint-disable no-underscore-dangle */
 const User = require('../models/user');
-// eslint-disable-next-line import/no-extraneous-dependencies
-const validator = require('validator');
+const {
+  OK, NOT_FOUND, BAD_REQUEST, SERVER_ERROR, CREATED,
+} = require('../resposneStatus');
 
-const findUser = (req, res) => {
-if (validator.isMongoId(req.params.userId)) {
-User.findById(req.params.userId)
-.then((user) => {
-    if (user) res.status(200).send({ data: user });
-    else {
-        res.status(404).send({
-            message: 'Нет пользователя с таким id',
-        });
-    }
-})
-.catch((err) => res.status(500).send({ message: `Произошла ошибка ${err}` }));
-} else {
-    res.status(404).send({
-        message: 'Нет пользователя с таким id',
-    });
-}
-};
-const findAllUsers = (req, res) => {
-    User.find({})
-    .then((user) => res.send({ data: user }))
-    .catch((err) => res.status(500).send({ message: `Произошла ошибка ${err}` }));
-};
-
-const CreateUser = (req, res) => {
-    const { name, about, avatar } = req.body.data;
-    User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
+module.exports.getUsers = (req, res) => {
+  User.find({})
+    .then((users) => res.status(OK).send(users))
     .catch((err) => {
-        if (err.name === 'ValidationError') res.status(400).send({ message: `${err}` });
-        else res.status(500).send({ message: `Произошла ошибка ${err}` });
+      res.status(SERVER_ERROR).send({ message: `Ошибка сервера ${err.message}` });
     });
 };
-
-const updateUser = (req, res) => {
-    User.findByIdAndUpdate(req.user._id, {
-        name: req.body.name, about: req.body.about, avatar: req.body.avatar,
+module.exports.getUserById = (req, res) => {
+  User.findById(req.params.userId)
+    .then((user) => {
+      if (!user) {
+        res.status(NOT_FOUND).send({ message: 'Пользователь не найден' });
+        return;
+      }
+      res.send(user);
     })
-    .then((user) => (res.send({ data: user })))
     .catch((err) => {
-if (err.name === 'ValidationError') res.status(400).send({ massage: `${err}` });
-        else res.status(500).send({ message: `Произошла ошибка ${err}` });
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).send({ message: `Ошибка валидации: ${err.message}` });
+      } else {
+        res.status(SERVER_ERROR).send({ message: `Ошибка сервера ${err.message}` });
+      }
     });
 };
 
-const updateAvatar = (req, res) => {
-    User.findByIdAndUpdate(req.user._id, {
-        avatar: req.body.avatar,
+module.exports.createUser = (req, res) => {
+  const { name, about, avatar } = req.body.data;
+  User.create({ name, about, avatar })
+    .then((user) => res.status(CREATED).send(user))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(BAD_REQUEST).send({ message: `Ошибка валидации: ${err.message}` });
+      } else {
+        res.status(SERVER_ERROR).send({ message: `Ошибка сервера ${err.message}` });
+      }
+    });
+};
+
+module.exports.updateUser = (req, res) => {
+  const { name, about } = req.body.data;
+  User.findByIdAndUpdate(req.user._id, { name, about }, {
+    new: true,
+    runValidators: true,
+  })
+    .then((user) => {
+      if (!user) {
+        res.status(NOT_FOUND).send({ message: 'Пользователь не найден' });
+        return;
+      }
+      res.status(OK).send({ user });
     })
-    .then((user) => (res.send({ data: user })))
     .catch((err) => {
-        if (err.name === 'ValidationError') res.status(400).send({ message: `${err}` });
-        else res.status(500).send({ message: `Произошла ошибка ${err}` });
+      if (err.name === 'ValidationError') {
+        res.status(BAD_REQUEST).send({ message: `Ошибка валидации: ${err.message}` });
+      } else {
+        res.status(SERVER_ERROR).send({ message: `Ошибка сервера ${err.message}` });
+      }
     });
 };
 
-module.exports = {
-    findUser, findAllUsers, CreateUser, updateUser, updateAvatar,
+module.exports.updateAvatar = (req, res) => {
+  const { avatar } = req.body.data;
+  User.findByIdAndUpdate(req.user._id, { avatar }, {
+    new: true,
+    runValidators: true,
+  })
+    .then((user) => {
+      if (!user) {
+        res.status(NOT_FOUND).send({ message: 'Пользователь не найден' });
+        return;
+      }
+      res.status(OK).send({ user });
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(BAD_REQUEST).send({ message: `Ошибка валидации: ${err.message}` });
+      } else {
+        res.status(SERVER_ERROR).send({ message: `Ошибка сервера ${err.message}` });
+      }
+    });
 };

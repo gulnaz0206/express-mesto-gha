@@ -1,35 +1,40 @@
-/* eslint-disable linebreak-style */
-/* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable indent */
 require('dotenv').config();
 const express = require('express');
-// const parser = require('parser');
-const path = require('path');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const bodyParser = require('body-parser');
+// const path = require('path');
 const mongoose = require('mongoose');
-const router = require('./routes');
+const userRouter = require('./routes/users');
+const cardRouter = require('./routes/cards');
+const { NOT_FOUND } = require('./resposneStatus');
 
 const { PORT = 3000 } = process.env;
 const app = express();
 
-mongoose.connect('mongodb://localhost:27017/mestodb', {
+mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
   // useNewUrlParser: true,
   // useCreateIndex: true,
   // useFindAndModify: false,
 });
 
 app.use(express.json());
-app.use('/', router);
-// app.use(parser());
+app.use(bodyParser.json());
 app.use((req, res, next) => {
   req.user = {
-    _id: '649436a589aa1701ed0aacd5'
+    _id: '6497fe4cd40b2c96897a986c',
   };
-
   next();
 });
-
-app.use(express.static(path.join(__dirname, 'public')));
+app.use((req, res, next) => {
+  console.log(`${req.method}: ${req.path} ${JSON.stringify(req.body)}`);
+  next();
+});
+app.use('/', userRouter);
+app.use('/', cardRouter);
+app.use('/', (req, res) => {
+  res.status(NOT_FOUND).send({ message: 'Страница не найдена' });
+});
 
 app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
+  console.log(`Server started on port ${PORT}`);
 });

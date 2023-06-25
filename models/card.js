@@ -1,19 +1,12 @@
-// /* eslint-disable linebreak-style */
-// /* eslint-disable import/no-extraneous-dependencies */
-// /* eslint-disable indent */
 const mongoose = require('mongoose');
 const validator = require('validator');
 
 const cardSchema = new mongoose.Schema({
   name: {
     type: String,
-    minlength: 2,
-    maxlength: 30,
-    required: true,
-    validate: {
-      validator: (value) => validator.isAlpha(value),
-      message: 'Неккоректное имя карточки',
-    },
+    required: [true, 'Поле "name" должно быть заполнено'],
+    minlength: [2, 'Минимальная длина поля "name" - 2'],
+    maxlength: [30, 'Максимальная длина поля "name" - 30'],
   },
   link: {
     type: String,
@@ -33,8 +26,6 @@ const cardSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       default: [],
       ref: 'user',
-      minlength: 2,
-      maxlength: 30,
     },
   ],
   createdAt: {
@@ -42,4 +33,4 @@ const cardSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-module.exports = mongoose.model('cards', cardSchema);
+module.exports = mongoose.model('card', cardSchema);
