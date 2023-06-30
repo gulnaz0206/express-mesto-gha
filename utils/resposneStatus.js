@@ -1,4 +1,3 @@
-/* eslint-disable linebreak-style */
 const OK = 200;
 const CREATED = 201;
 const BAD_REQUEST = 400;

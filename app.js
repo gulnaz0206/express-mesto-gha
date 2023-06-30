@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
-const { NOT_FOUND } = require('./resposneStatus');
+const { NOT_FOUND } = require('./utils/resposneStatus');
 
 const { PORT = 3000 } = process.env;
 const app = express();

@@ -1,8 +1,7 @@
-/* eslint-disable no-underscore-dangle */
 const Card = require('../models/card');
 const {
   OK, CREATED, BAD_REQUEST, NOT_FOUND, SERVER_ERROR,
-} = require('../resposneStatus');
+} = require('../utils/resposneStatus');
 
 module.exports.getCards = (req, res) => {
   Card.find({})
