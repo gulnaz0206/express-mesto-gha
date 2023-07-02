@@ -12,3 +12,5 @@
 
 Данная практическая работа направлена на создание серверной части проекта "Место"
 Использовались такие программы, как Node.js, Express.js, MongoDB Compass, Mongoose, Postman
+
+https://github.com/gulnaz0206/express-mesto-gha
