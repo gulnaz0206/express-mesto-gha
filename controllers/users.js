@@ -1,7 +1,8 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const BadRequest = require('../errors/BadRequest');
 const NotFound = require('../errors/NotFound');
-const Conflict = require('../errors/Conflict');
 const {
   OK, CREATED,
 } = require('../utils/resposneStatus');
@@ -40,22 +41,18 @@ module.exports.createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then(() => {
-      res.status(CREATED).send({
-        data: {
-          name, about, avatar, email,
-        },
-      });
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new BadRequest(`Ошибка валидации: ${err.message}`));
-      } if (err.code === 11000) {
-        next(new Conflict('Пользователь с таким id уже существует'));
-      } else {
-        next(err);
-      }
-    });
+    .then((user) => res
+      .status(CREATED)
+      .send({ data: user }))
+    .catch(next);
+};
+
+module.exports.checkUser = (user, res, next) => {
+  if (user) {
+    return res.send({ data: user });
+  }
+  const error = new NotFound('Пользователь не найден');
+  return next(error);
 };
 
 module.exports.updateUser = (req, res, next) => {

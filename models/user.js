@@ -2,67 +2,67 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const isURL = require('validator/lib/isURL');
 const isEmail = require('validator/lib/isEmail');
+const Unauthorized = require('../errors/Unauthorized');
 
-const userSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, 'Поле "name" должно быть заполнено'],
-      minlength: [2, 'Минимальная длина поля "name" - 2'],
-      maxlength: [30, 'Максимальная длина поля "name" - 30'],
-      default: 'Жак-Ив Кусто',
-      message: 'Некорректное имя',
+const userSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    minlength: [2, 'Минимальная длина поля "name" - 2'],
+    maxlength: [30, 'Максимальная длина поля "name" - 30'],
+    default: 'Жак-Ив Кусто',
+    message: 'Некорректное имя',
+  },
+  about: {
+    type: String,
+    required: true,
+    minlength: [2, 'Минимальная длина поля "about" - 2'],
+    maxlength: [30, 'Максимальная длина поля "about" - 30'],
+    default: 'Исследователь',
+    message: 'Некорректное описание',
+  },
+  avatar: {
+    type: 'String',
+    required: true,
+    validate: {
+      validator: (value) => isURL(value),
+      message: (value) => `${(value)} некорректный, попробуйте использовать другой url`,
     },
-    about: {
-      type: String,
-      required: [true, 'Поле "about" должно быть заполнено'],
-      minlength: [2, 'Минимальная длина поля "about" - 2'],
-      maxlength: [30, 'Максимальная длина поля "about" - 30'],
-      default: 'Исследователь',
-      message: 'Некорректное описание',
-    },
-    avatar: {
-      data: Buffer,
-      type: 'String',
-      required: true,
-      validate: {
-        validator: (value) => isURL(value),
-        message: (value) => `${(value)} некорректный, попробуйте использовать другой url`,
-      },
-      default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      validate: {
-        validator: (email) => isEmail(email),
-        message: ({ value }) => `${value} некорректный, попробуйте использовать другой email`,
-      },
-    },
-    password: {
-      type: String,
-      required: true,
-      select: false,
+    default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    validate: {
+      validator: (email) => isEmail(email),
+      message: ({ value }) => `${value} некорректный, попробуйте использовать другой email`,
     },
   },
-  { versionKey: false },
-);
+  password: {
+    type: String,
+    required: true,
+    select: false,
+  },
+}, { toJSON: { useProtection: true }, toObject: { useProtection: true } });
 
-userSchema.statics.findUserByCredentials = function (email, password) {
-  return this.findOne({ email }).select('+password')
-    .then((user) => {
-      if (!user) {
-        throw new Unauthorized('Неправильно введены почта или пароль');
-      }
-      return bcrypt.compare(password, user.password)
-        .then((matched) => {
-          if (!matched) {
-            throw new Unauthorized('Неправильно введены почта или пароль');
-          }
-          return user;
-        });
-    });
+userSchema.statics.findUserByCredentials = async function findUserByCredentials(email, password) {
+  try {
+    const user = await this.findOne({ email }).select('+password');
+    if (!user) {
+      const error = new Unauthorized('Неправильно введены почта или пароль');
+      throw error;
+    }
+    const matched = await bcrypt.compare(password, user.password);
+    if (!matched) {
+      const error = new Unauthorized('Неправильно введены почта или пароль');
+      throw error;
+    }
+    return user;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 };
 
 module.exports = mongoose.model('user', userSchema);
