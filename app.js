@@ -21,16 +21,11 @@ mongoose.connect(DB_URL)
   .catch((err) => console.log(`Ошибка ${err}: ${err.message}`));
 
 app.use(express.json());
-app.use(helmet());
+// app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
-app.use((req, res, next) => {
-  req.user = {
-    _id: '6497fe4cd40b2c96897a986c',
-  };
-  next();
-});
+
 app.use((req, res, next) => {
   console.log(`${req.method}: ${req.path} ${JSON.stringify(req.body)}`);
   next();
@@ -43,7 +38,7 @@ app.use('/', (req, res, next) => {
   next(new NotFound('Страница не найдена'));
 });
 app.use(errors());
-app.use(errorHandle);
+// app.use(errorHandle);
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
 });

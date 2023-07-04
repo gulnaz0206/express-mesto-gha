@@ -7,7 +7,7 @@ const Unauthorized = require('../errors/Unauthorized');
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    required: false,
     minlength: [2, 'Минимальная длина поля "name" - 2'],
     maxlength: [30, 'Максимальная длина поля "name" - 30'],
     default: 'Жак-Ив Кусто',
@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
   },
   about: {
     type: String,
-    required: true,
+    required: false,
     minlength: [2, 'Минимальная длина поля "about" - 2'],
     maxlength: [30, 'Максимальная длина поля "about" - 30'],
     default: 'Исследователь',
@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: 'String',
-    required: true,
+    required: false,
     validate: {
       validator: (value) => isURL(value),
       message: (value) => `${(value)} некорректный, попробуйте использовать другой url`,
@@ -32,11 +32,11 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: true,
+    required: false,
     unique: true,
     validate: {
-      validator: (email) => isEmail(email),
-      message: ({ value }) => `${value} некорректный, попробуйте использовать другой email`,
+      validator: (email) =>(isEmail(email)),
+      message: ({ value }) => `${console.log(value)} некорректный, попробуйте использовать другой email`,
     },
   },
   password: {

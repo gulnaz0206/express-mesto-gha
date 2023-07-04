@@ -31,9 +31,9 @@ module.exports.getUserById = (req, res, next) => {
 
 module.exports.createUser = (req, res, next) => {
   const {
-    name, about, avatar, email,
-  } = req.body;
-  bcrypt.hash(req.body.password, 10)
+    name, about, avatar, email, password,
+  } = req.body.data;
+  bcrypt.hash(password, 10)
     .then((hash) => User.create({
       name,
       about,
@@ -99,6 +99,7 @@ module.exports.updateAvatar = (req, res, next) => {
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body.data;
+
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
