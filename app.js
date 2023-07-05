@@ -9,26 +9,26 @@ const auth = require('./middlewares/auth');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
 const NotFound = require('./errors/NotFound');
-// const errorHandle = require('./middlewares/errorHandle');
+const errorHandle = require('./middlewares/errorHandle');
 const { authValidation, regValidation } = require('./middlewares/validation');
 const { login, createUser } = require('./controllers/users');
 
 const { PORT = 3000, DB_URL = 'mongodb://127.0.0.1:27017/mestodb' } = process.env;
 const app = express();
-
-mongoose.connect(DB_URL)
-  .then(() => console.log('connected'))
-  .catch((err) => console.log(`Ошибка ${err}: ${err.message}`));
-
 app.use(express.json());
 app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
+mongoose.connect(DB_URL)
+  .then(() => console.log('connected'))
+  .catch((err) => console.log(`Ошибка ${err}: ${err.message}`));
 app.post('/signin', authValidation, login);
 app.post('/signup', regValidation, createUser);
 app.use('/', auth, userRouter);
 app.use('/', auth, cardRouter);
+app.use(errors());
+app.use(errorHandle);
 app.use('/', (req, res, next) => {
   next(new NotFound('Страница не найдена'));
 });

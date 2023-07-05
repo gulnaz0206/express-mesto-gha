@@ -3,11 +3,10 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const BadRequest = require('../errors/BadRequest');
 const NotFound = require('../errors/NotFound');
+const Conflict = require('../errors/Conflict');
 const {
   OK, CREATED,
 } = require('../utils/resposneStatus');
-const { get } = require('mongoose');
-const router = require('../routes/users');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -43,10 +42,24 @@ module.exports.createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then((user) => res
-      .status(CREATED)
-      .send({ data: user }))
-    .catch(next);
+    .then(() => {
+      res.status(CREATED).send(
+        {
+          data: {
+            name, about, avatar, email,
+          },
+        },
+      );
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new BadRequest(`Ошибка валидации: ${err.message}`));
+      } if (err.code === 11000) {
+        next(new Conflict('Пользователь с таким email уже зарегистрирован'));
+      } else {
+        next(err);
+      }
+    });
 };
 
 module.exports.checkUser = (user, res, next) => {
@@ -112,13 +125,13 @@ module.exports.login = (req, res, next) => {
     .catch(next);
 };
 
-module.exports.getMeUser = (req, res, next) => {
-  req.body.userId = res.user._id;
-  User.findById(req.body.userId).then((user) => {
-    res.send(user);
-  })
-    .catch((err) => {
-      console.log(req.body.userId);
-      next(new BadRequest(`Ошибка валидации: ${err.message}`));
-    });
+module.exports.getUserInfo = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) {
+        throw new NotFound('Пользователь не найден');
+      }
+      res.status(OK).send({ user });
+    })
+    .catch(next);
 };
