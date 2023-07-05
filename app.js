@@ -4,6 +4,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
+const { errors } = require('celebrate');
 const auth = require('./middlewares/auth');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
@@ -11,7 +12,6 @@ const NotFound = require('./errors/NotFound');
 // const errorHandle = require('./middlewares/errorHandle');
 const { authValidation, regValidation } = require('./middlewares/validation');
 const { login, createUser } = require('./controllers/users');
-const { errors } = require('celebrate');
 
 const { PORT = 3000, DB_URL = 'mongodb://127.0.0.1:27017/mestodb' } = process.env;
 const app = express();
