@@ -24,21 +24,28 @@ module.exports.createCard = (req, res) => {
     });
 };
 module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
-    .then((card) => {
-      if (!card) {
-        res.status(NOT_FOUND).send({ message: 'Такой карточки не существует' });
-        return;
-      }
-      res.status(OK).send({ data: card });
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Невалидный id ' });
-      } else {
-        res.status(SERVER_ERROR).send({ message: `Произошла ошиибка ${err.name} с текстом ${err.message}` });
-      }
-    });
+  Card.findByIdAndRemove(req.params.cardId, req.user._id).then((card) => {
+    if (req.user._id !== card.owner._id) {
+      res.status(NOT_FOUND).send({ message: 'Нет прав на удаление' });
+    } else {
+      Card.findByIdAndRemove(req.params.cardId)
+        .then((card) => {
+          console.log(card);
+          if (!card) {
+            res.status(NOT_FOUND).send({ message: 'Такой карточуи не существует' });
+          } else {
+            res.status(OK).send({ data: card });
+          }
+        })
+        .catch((err) => {
+          if (err.name === 'CastError') {
+            res.status(BAD_REQUEST).send({ message: 'Невалидный id ' });
+          } else {
+            res.status(SERVER_ERROR).send({ message: `Произошла ошиибка ${err.name} с текстом ${err.message}` });
+          }
+        });
+    }
+  });
 };
 module.exports.likeCard = (req, res) => {
   Card.findByIdAndUpdate(

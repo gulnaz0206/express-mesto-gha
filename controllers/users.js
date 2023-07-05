@@ -6,6 +6,8 @@ const NotFound = require('../errors/NotFound');
 const {
   OK, CREATED,
 } = require('../utils/resposneStatus');
+const { get } = require('mongoose');
+const router = require('../routes/users');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -98,12 +100,25 @@ module.exports.updateAvatar = (req, res, next) => {
 };
 
 module.exports.login = (req, res, next) => {
-  const { email, password } = req.body.data;
+  const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
-      res.send({ token });
+      res.setHeader('Set-Cookie', `${token}`);
+      res.send(user);
+      req.body.user = user;
     })
     .catch(next);
+};
+
+module.exports.getMeUser = (req, res, next) => {
+  req.body.userId = res.user._id;
+  User.findById(req.body.userId).then((user) => {
+    res.send(user);
+  })
+    .catch((err) => {
+      console.log(req.body.userId);
+      next(new BadRequest(`Ошибка валидации: ${err.message}`));
+    });
 };
